@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends,  HTTPException, status
+from fastapi import APIRouter, Depends,  HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infra.db import get_session
 from app.domain.models import User
@@ -18,7 +18,7 @@ def make_guest_name(requested: Optional[str]) -> str:
     return base
     
 @router.post("/guest", response_model=AuthResp, status_code=status.HTTP_201_CREATED)
-async def create_guest(payload: GuestReq, session: AsyncSession = Depends(get_session)):
+async def create_guest(payload: GuestReq, response: Response, session: AsyncSession = Depends(get_session)):
     name = make_guest_name(payload.display_name)
     
     if len(name) > 64:
@@ -29,14 +29,35 @@ async def create_guest(payload: GuestReq, session: AsyncSession = Depends(get_se
         session.add(u)
         await session.commit()
         await session.refresh(u)
+
+        # Set HttpOnly cookie so the browser remembers the user automatically
+        response.set_cookie(
+            key="uid",
+            value=str(u.id),
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            httponly=True,
+            samesite="lax",
+            secure=False,               # set True behind HTTPS in prod
+        )
+
         return AuthResp(user_id=str(u.id), display_name=u.display_name) 
 
     except IntegrityError as e:
         await session.rollback()
-        # Show the precise PG error (e.g., unique_violation, not_null_violation)
         logging.exception("Integrity error on /auth/guest")
         raise HTTPException(status_code=409, detail=str(e.orig))
     except Exception as e:
         await session.rollback()
         logging.exception("Unexpected DB error on /auth/guest")
         raise HTTPException(status_code=500, detail=str(e))
+
+    
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(response: Response):
+    response.delete_cookie(
+        key="uid",
+        path="/",
+        httponly=True,
+        samesite="lax",
+        secure=False  # True in prod (HTTPS)
+    )

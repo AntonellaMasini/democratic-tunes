@@ -18,4 +18,4 @@ async def health():
 
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-# app.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
+app.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
