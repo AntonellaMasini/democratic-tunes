@@ -1,0 +1,29 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
+.mypy_cache/
+
+# Env & secrets
+.env
+*.env
+
+# OS/Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Build/coverage
+dist/
+build/
+.coverage
+
+# Alembic
+alembic/*.pyc
+alembic/*/__pycache__/
+
+# Docker
+*.log
