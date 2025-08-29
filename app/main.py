@@ -19,3 +19,5 @@ async def health():
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
+app.include_router(tracks.router, prefix="/tracks", tags=["tracks"])
+app.include_router(votes.router, prefix="/votes", tags=["votes"])

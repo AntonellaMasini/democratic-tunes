@@ -1,5 +1,5 @@
-import uuid
 from pydantic import BaseModel
+from datetime import datetime
 
 class TrackOut(BaseModel):
     id: str
@@ -8,8 +8,7 @@ class TrackOut(BaseModel):
     duration_ms: int
 
 class AddTrackReq(BaseModel):
-    user_id: uuid.UUID
-    track_id: str
+    track_id: str  # user comes from cookie/header
 
 class QueueItem(BaseModel):
     room_track_id: str
@@ -20,3 +19,4 @@ class QueueItem(BaseModel):
     votes: int
     score: float
     status: str
+    created_at: datetime

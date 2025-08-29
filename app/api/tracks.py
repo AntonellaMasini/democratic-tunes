@@ -1,76 +1,81 @@
 import uuid
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select, func, or_
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infra.db import get_session
-from app.domain.models import Track, Room, RoomTrack, Vote, TrackStatus
-from app.domain.scoring import score_room_track
+from app.api.deps import get_current_user_id
 from app.schemas.tracks import TrackOut, AddTrackReq, QueueItem
+from app.domain.scoring import score_room_track
+from app.sql import tracks as SQL
 
-router = APIRouter()
-
-
+router = APIRouter(tags=["tracks"])
 
 @router.get("/search", response_model=list[TrackOut])
 async def search_tracks(q: str, session: AsyncSession = Depends(get_session)):
-    stmt = select(Track).where(
-        or_(Track.title.ilike(f"%{q}%"), Track.artist.ilike(f"%{q}%"))
-    ).limit(20)
-    rows = (await session.execute(stmt)).scalars().all()
-    return [TrackOut(id=t.id, title=t.title, artist=t.artist, duration_ms=t.duration_ms) for t in rows]
-
-@router.post("/rooms/{code}/tracks", response_model=list[QueueItem])
-async def add_track_to_room(code: str, req: AddTrackReq, session: AsyncSession = Depends(get_session)):
-    room = (await session.execute(select(Room).where(Room.code == code))).scalar_one_or_none()
-    if not room:
-        raise HTTPException(404, "Room not found")
-
-    track = await session.get(Track, req.track_id)
-    if not track:
-        raise HTTPException(404, "Track not found")
-
-    rt = RoomTrack(room_id=room.id, track_id=track.id, added_by_user_id=req.user_id, status=TrackStatus.queued)
-    session.add(rt)
-    await session.commit()
-    await session.refresh(rt)
-
-    return await _compute_queue(session, room.id)
+    rows = (await session.execute(text(SQL.SEARCH_TRACKS), {"q": f"%{q}%"})).mappings().all()
+    return [TrackOut(**row) for row in rows] #returns list of trackout objects
+    
 
 @router.get("/rooms/{code}/queue", response_model=list[QueueItem])
 async def get_queue(code: str, session: AsyncSession = Depends(get_session)):
-    room = (await session.execute(select(Room).where(Room.code == code))).scalar_one_or_none()
-    if not room:
-        raise HTTPException(404, "Room not found")
-    return await _compute_queue(session, room.id)
+    room_row = (await session.execute(text(SQL.GET_ACTIVE_ROOM_BY_CODE), {"code": code})).mappings().first()
+    if not room_row:
+        raise HTTPException(404, "Room not found or inactive")
+    return await _compute_queue(session, room_row["id"])
+
+
+@router.post("/rooms/{code}/tracks", response_model=list[QueueItem])
+async def add_track_to_room(
+    code: str, 
+    payload: AddTrackReq,
+    session: AsyncSession = Depends(get_session),
+    user_id = Depends(get_current_user_id)
+    ):
+
+    room_row = (await session.execute(text(SQL.GET_ACTIVE_ROOM_BY_CODE), {"code": code})).mappings().first()
+    if not room_row:
+        raise HTTPException(404, "Room not found or inactive")
+    room_id = room_row["id"]
+
+    exists = await session.execute(text(SQL.TRACK_EXISTS), {"track_id": payload.track_id})
+    if exists.scalar_one_or_none() is None:
+        raise HTTPException(404, "Track not found")
+
+    rt_id = uuid.uuid4()
+    await session.execute(
+        text(SQL.INSERT_ROOM_TRACK_IF_NOT_EXISTS),
+        {"id": str(rt_id), "room_id": str(room_id), "track_id": payload.track_id, "user_id": str(user_id)},
+    )
+    await session.commit()
+    return await _compute_queue(session, room_id)
+
 
 async def _compute_queue(session: AsyncSession, room_id):
-    votes_sum_cte = select(
-        Vote.room_track_id,
-        func.coalesce(func.sum(Vote.value), 0).label("votes_sum")
-    ).group_by(Vote.room_track_id).cte("votes_sum")
+    rows = (await session.execute(text(SQL.COMPUTE_QUEUE), {"room_id": str(room_id)})).mappings().all()
+    now = datetime.now(timezone.utc)
+    items: list[QueueItem] = []
+    created_at_by_id: dict[str, datetime] = {}
 
-    stmt = (
-        select(RoomTrack, Track, func.coalesce(votes_sum_cte.c.votes_sum, 0))
-        .join(Track, Track.id == RoomTrack.track_id)
-        .join(votes_sum_cte, votes_sum_cte.c.room_track_id == RoomTrack.id, isouter=True)
-        .where(RoomTrack.room_id == room_id, RoomTrack.status == TrackStatus.queued)
-    )
-
-    rows = (await session.execute(stmt)).all()
-    items = []
-    for rt, t, votes_sum in rows:
-        score = score_room_track(rt.created_at, int(votes_sum or 0), is_host_add=False)
-        items.append(QueueItem(
-            room_track_id=str(rt.id),
-            track_id=t.id,
-            title=t.title,
-            artist=t.artist,
-            duration_ms=t.duration_ms,
-            votes=int(votes_sum or 0),
+    for row in rows:
+        is_host_add = str(row["added_by_user_id"]) == str(row["host_user_id"])
+        score = score_room_track(row["created_at"], int(row["votes"]), is_host_add=is_host_add, now=now)
+        item = QueueItem(
+            room_track_id=str(row["room_track_id"]),
+            track_id=row["track_id"],
+            title=row["title"],
+            artist=row["artist"],
+            duration_ms=row["duration_ms"],
+            votes=int(row["votes"]),
             score=float(score),
-            status=rt.status.value,
-        ))
+            status=str(row["status"]),
+            created_at=row["created_at"],
+        )
+        items.append(item)
+        created_at_by_id[item.room_track_id] = row["created_at"]
 
-    items.sort(key=lambda x: (-x.score, x.room_track_id))
+    # created_at ASC, then score DESC 
+    items.sort(key=lambda i: created_at_by_id[i.room_track_id])
+    items.sort(key=lambda i: i.score, reverse=True)
     return items
