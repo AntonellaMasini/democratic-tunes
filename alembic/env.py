@@ -17,12 +17,12 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# ---- Import your Base so Alembic can autogenerate ----
-from app.infra.db import Base  # <-- your declarative Base
+# ---- Import Base so Alembic can autogenerate ----
+from app.infra.db import Base  # 
 import app.domain.models 
 target_metadata = Base.metadata
 
-# ---- Use async engine (since you're using asyncpg) ----
+# ---- Use async engine ---
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
 
