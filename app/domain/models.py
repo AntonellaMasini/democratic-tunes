@@ -12,6 +12,7 @@ from sqlalchemy import (
     Integer,
     String,
     UniqueConstraint,
+    text,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -24,16 +25,16 @@ class User(Base):
     __tablename__ = "users"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     display_name: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True),  server_default=func.now())
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class Room(Base):
     __tablename__ = "rooms"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     code: Mapped[str] = mapped_column(String(12), unique=True, nullable=False)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
-    host_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True),  server_default=func.now())
+    host_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"), nullable=False)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class RoomMember(Base):
     __tablename__ = "room_members"
@@ -73,7 +74,7 @@ class RoomTrack(Base):
     track_id: Mapped[str] = mapped_column(String, ForeignKey("tracks.id"), nullable=False)
     added_by_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     status: Mapped[TrackStatus] = mapped_column(SAEnum(TrackStatus, name="track_status"), default=TrackStatus.queued, nullable=False)
-    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True),  server_default=func.now())
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
    
     __table_args__ = (
         Index("ix_room_tracks_room_id", "room_id"),
@@ -86,7 +87,7 @@ class Vote(Base):
     room_track_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("room_tracks.id"), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     value: Mapped[int] = mapped_column(Integer, nullable=False)  # +1 or -1
-    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True),  server_default=func.now())
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     __table_args__ = (
         UniqueConstraint("room_track_id", "user_id", name="uq_vote_per_user_per_track"),

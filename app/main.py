@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
-
+from app.api import auth, rooms, tracks, votes
 # Load environment variables from .env
 load_dotenv()
 
@@ -18,4 +18,4 @@ async def health():
 
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
+# app.include_router(rooms.router, prefix="/rooms", tags=["rooms"])

@@ -45,6 +45,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,  # detect column type changes
+        compare_server_default=True
     )
     with context.begin_transaction():
         context.run_migrations()
