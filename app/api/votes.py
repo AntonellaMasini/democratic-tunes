@@ -9,7 +9,7 @@ from app.schemas.votes import VoteReq
 from app.schemas.tracks import QueueItem
 from app.api.tracks import _compute_queue
 from app.sql import votes as SQLV
-from app.sql import tracks as SQLT  #reuse GET_ACTIVE_ROOM_BY_CODE
+from app.sql import tracks as SQLT
 
 router = APIRouter(tags=["votes"])
 
@@ -24,7 +24,7 @@ async def cast_vote(
     if payload.value not in (-1, 1):
         raise HTTPException(422, "value must be +1 or -1")
 
-    # 1) active room?
+    # 1) check if room exists or is active
     room_row = (
         await session.execute(text(SQLT.GET_ACTIVE_ROOM_BY_CODE), {"code": code})
     ).mappings().first()
@@ -32,7 +32,7 @@ async def cast_vote(
         raise HTTPException(404, "Room not found or inactive")
     room_id = room_row["id"]
 
-    # 2) room_track belongs to this room and is queued?
+    # 2) check if room_track belongs to this room and is queued
     rt_ok = (
         await session.execute(
             text(SQLV.GET_ROOM_TRACK_IN_ROOM),

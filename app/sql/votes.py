@@ -8,7 +8,11 @@ WHERE id = :room_track_id::uuid
 
 UPSERT_VOTE = """
 INSERT INTO votes (id, room_track_id, user_id, value)
-VALUES (:id::uuid, :room_track_id::uuid, :user_id::uuid, :value::int)
+VALUES (
+    :id::uuid, 
+    :room_track_id::uuid, 
+    :user_id::uuid, 
+    :value::int)
 ON CONFLICT (room_track_id, user_id)
 DO UPDATE SET value = EXCLUDED.value
 RETURNING id;

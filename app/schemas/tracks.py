@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 class TrackOut(BaseModel):
     id: str
@@ -20,3 +21,8 @@ class QueueItem(BaseModel):
     score: float
     status: str
     created_at: datetime
+
+
+class QueueState(BaseModel):
+    now_playing: Optional[QueueItem] = None
+    queue: list[QueueItem]
