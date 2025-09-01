@@ -1,20 +1,22 @@
-import uuid
 from datetime import datetime, timezone
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infra.db import get_session
 from app.api.deps import get_current_user_id
-from app.schemas.tracks import TrackOut, AddTrackReq, QueueItem
 from app.domain.scoring import score_room_track
+from app.infra.db import get_session
+from app.schemas.tracks import AddTrackReq, QueueItem, TrackOut
 from app.sql import tracks as SQL
 
 router = APIRouter(tags=["tracks"])
 
 @router.get("/search", response_model=list[TrackOut])
-async def search_tracks(q: str, session: AsyncSession = Depends(get_session)):
-    rows = (await session.execute(text(SQL.SEARCH_TRACKS), {"q": f"%{q}%"})).mappings().all()
+async def search_tracks(artist_or_title: str, session: AsyncSession = Depends(get_session)):
+    rows = (await session.execute(text(SQL.SEARCH_TRACKS), {"q": f"%{artist_or_title}%"})).mappings().all()
     return [TrackOut(**row) for row in rows] #returns list of trackout objects
     
 
@@ -44,11 +46,23 @@ async def add_track_to_room(
         raise HTTPException(404, "Track not found")
 
     rt_id = uuid.uuid4()
-    await session.execute(
-        text(SQL.INSERT_ROOM_TRACK_IF_NOT_EXISTS),
-        {"id": str(rt_id), "room_id": str(room_id), "track_id": payload.track_id, "user_id": str(user_id)},
-    )
-    await session.commit()
+    try:
+        await session.execute(
+            text(SQL.INSERT_ROOM_TRACK_IF_NOT_EXISTS),
+            {
+                "id": rt_id,
+                "room_id": room_id,                 
+                "track_id_ins": payload.track_id,   
+                "track_id_chk": payload.track_id,
+                "user_id": user_id,
+            },
+        )
+        await session.commit()
+    except IntegrityError:
+        # If two inserts raced, the partial unique index will reject one.
+        # Roll back and continue; the track is already queued.
+        await session.rollback()
+
     return await _compute_queue(session, room_id)
 
 

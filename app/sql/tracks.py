@@ -26,12 +26,17 @@ LIMIT 20;
 INSERT_ROOM_TRACK_IF_NOT_EXISTS = """
 WITH ins AS (
   INSERT INTO room_tracks (id, room_id, track_id, added_by_user_id, status)
-  SELECT :id::uuid, :room_id::uuid, :track_id::text, :user_id::uuid, 'queued'::track_status
+  SELECT
+    CAST(:id AS uuid),
+    CAST(:room_id AS uuid),
+    CAST(:track_id_ins AS varchar),
+    CAST(:user_id AS uuid),
+    'queued'::track_status
   WHERE NOT EXISTS (
     SELECT 1
     FROM room_tracks
-    WHERE room_id = :room_id::uuid
-      AND track_id = :track_id::text
+    WHERE room_id = CAST(:room_id AS uuid)
+      AND track_id = CAST(:track_id_chk AS varchar)
       AND status = 'queued'::track_status
   )
   RETURNING id
@@ -39,6 +44,7 @@ WITH ins AS (
 SELECT id FROM ins;
 """
 
+#get all the tracks in queue, only include the ones with status as queued
 COMPUTE_QUEUE = """
 WITH votes_sum AS (
   SELECT 
@@ -63,6 +69,6 @@ JOIN tracks t ON t.id = rt.track_id
 JOIN rooms  r ON r.id = rt.room_id 
 LEFT JOIN votes_sum vs 
 ON vs.room_track_id = rt.id
-WHERE rt.room_id = :room_id::uuid
+WHERE rt.room_id = CAST(:room_id AS uuid)
   AND rt.status = 'queued'::track_status;
 """

@@ -22,7 +22,6 @@ class QueueItem(BaseModel):
     status: str
     created_at: datetime
 
-
 class QueueState(BaseModel):
     now_playing: Optional[QueueItem] = None
     queue: list[QueueItem]

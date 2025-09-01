@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from app.api import auth, rooms, tracks, votes
+from app.api import auth, rooms, tracks, votes, playback
 # Load environment variables from .env
 load_dotenv()
 
@@ -21,3 +21,4 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
 app.include_router(tracks.router, prefix="/tracks", tags=["tracks"])
 app.include_router(votes.router, prefix="/votes", tags=["votes"])
+app.include_router(playback.router, tags=["playback"])

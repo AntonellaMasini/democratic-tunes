@@ -7,7 +7,7 @@ WHERE code = :code AND is_active IS TRUE;
 GET_CURRENT_PLAYING = """
 SELECT id
 FROM room_tracks
-WHERE room_id = :room_id::uuid
+WHERE room_id = CAST(:room_id AS uuid)
   AND status = 'playing'::track_status
 ORDER BY created_at DESC
 LIMIT 1;
@@ -16,18 +16,19 @@ LIMIT 1;
 MARK_PLAYED = """
 UPDATE room_tracks
 SET status = 'played'::track_status
-WHERE id = :room_track_id::uuid;
+WHERE id = CAST(:room_track_id AS uuid);
 """
 
 SET_PLAYING = """
 UPDATE room_tracks
 SET status = 'playing'::track_status
-WHERE id = :room_track_id::uuid;
+WHERE id = CAST(:room_track_id AS uuid);
 """
 
 GET_NOW_PLAYING_DETAILS = """
 WITH votes_sum AS (
-  SELECT room_track_id, COALESCE(SUM(value), 0) AS votes
+  SELECT room_track_id, 
+  COALESCE(SUM(value), 0) AS votes
   FROM votes
   GROUP BY room_track_id
 )
@@ -49,7 +50,7 @@ JOIN rooms  r
     ON r.id = rt.room_id
 LEFT JOIN votes_sum vs 
      ON vs.room_track_id = rt.id
-WHERE rt.room_id = :room_id::uuid
+WHERE rt.room_id = CAST(:room_id AS uuid)
   AND rt.status = 'playing'::track_status
 ORDER BY rt.created_at DESC
 LIMIT 1;
