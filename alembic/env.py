@@ -5,12 +5,15 @@ from alembic import context
 
 sys.path.append(os.path.abspath("."))
 
-# Load environment variables from .env 
+# load .env locally if present
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except Exception:
     pass
+
+# import the normalizer
+from app.infra.db_url import load_db_url
 
 # Alembic Config
 config = context.config
@@ -25,7 +28,6 @@ target_metadata = Base.metadata
 # ---- Use async engine ---
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
-from app.infra.db_url import load_db_url
 
 def get_url() -> str:
     # use Alembic config as fallback
