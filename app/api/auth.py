@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends,  HTTPException, status, Response
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.infra.db import get_session
-from app.domain.models import User
-from app.schemas.auth import AuthResp, GuestReq
-from typing import Optional
-import secrets
-from sqlalchemy.exc import IntegrityError
 import logging
+import os
+import secrets
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.domain.models import User
+from app.infra.db import get_session
+from app.schemas.auth import AuthResp, GuestReq 
 
 router = APIRouter()
 
