@@ -53,10 +53,13 @@ def _normalize_ssl_query(url: str, *, for_async: bool) -> str:
 
     if for_async:
         # asyncpg uses ?ssl=true to force TLS; otherwise it’s plain.
-        if not is_internal and mode in ("require", "verify-ca", "verify-full"):
-            q["ssl"] = "true"
+        if not is_internal:
+            # If external host, default to SSL unless explicitly disabled
+            if mode in ("require", "verify-ca", "verify-full") or "ssl" not in q:
+                q["ssl"] = "true"
         else:
-            q.pop("ssl", None)  # ensure no leftover
+            # Internal/private Fly networks do not use TLS
+            q.pop("ssl", None)
 
     new_query = urlencode(q, doseq=True)
     return urlunsplit((parts.scheme, parts.netloc, parts.path, new_query, parts.fragment))
