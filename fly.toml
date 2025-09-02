@@ -26,3 +26,6 @@ primary_region = 'cdg'
   timeout = "2s"
   method = "GET"
   path = "/health"
+
+[deploy]
+  release_command = "alembic upgrade head"

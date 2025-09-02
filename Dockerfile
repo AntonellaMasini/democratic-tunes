@@ -23,4 +23,4 @@ ENV PORT=8080
 # then starts the server with Gunicorn using Uvicorn workers on the specified port
 # - Gunicorn alone doesn’t support async apps well, Gunicorn is like concert manager
 # - Uvicorn alone doesn’t handle process management (multiple workers), Uvicorn is like one of the bands that actually performs the music (runs async Python code)
-CMD ["bash", "-lc", "alembic upgrade head && gunicorn -k uvicorn.workers.UvicornWorker 'app.main:app' --bind 0.0.0.0:${PORT} --workers 2 --timeout 60"]
+CMD ["bash", "-lc", "gunicorn -k uvicorn.workers.UvicornWorker 'app.main:app' --bind 0.0.0.0:${PORT} --workers 2 --timeout 60"]
