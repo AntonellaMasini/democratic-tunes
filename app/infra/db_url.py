@@ -41,20 +41,22 @@ def load_db_url(*, for_async: bool = True, fallback_config=None) -> str:
     return url
 
 def _normalize_ssl_query(url: str, *, for_async: bool) -> str:
-    if not url.startswith("postgres"):
-        return url
     parts = urlsplit(url)
     q = dict(parse_qsl(parts.query, keep_blank_values=True))
+    host = parts.hostname or ""
+
+    # Drop psycopg-style sslmode unconditionally
+    mode = (q.pop("sslmode", "") or "").lower()
+
+    # Fly internal DB hosts typically end with .internal or .flycast → no TLS
+    is_internal = host.endswith(".internal") or host.endswith(".flycast")
 
     if for_async:
-        # asyncpg doesn't know sslmode; map common modes to ssl=true
-        mode = (q.pop("sslmode", "") or "").lower()
-        if mode in ("require", "verify-ca", "verify-full"):
+        # asyncpg uses ?ssl=true to force TLS; otherwise it’s plain.
+        if not is_internal and mode in ("require", "verify-ca", "verify-full"):
             q["ssl"] = "true"
-        # for "disable"/"allow"/"prefer" omit ssl completely
-    else:
-        # keep sslmode for psycopg if you ever use a sync engine
-        pass
+        else:
+            q.pop("ssl", None)  # ensure no leftover
 
     new_query = urlencode(q, doseq=True)
     return urlunsplit((parts.scheme, parts.netloc, parts.path, new_query, parts.fragment))
