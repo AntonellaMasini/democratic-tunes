@@ -45,28 +45,27 @@ def _normalize_ssl_query(url: str, *, for_async: bool) -> str:
     q = dict(parse_qsl(parts.query, keep_blank_values=True))
     host = parts.hostname or ""
 
-    # Drop psycopg-style sslmode unconditionally
+    # Always drop psycopg-style sslmode
     mode = (q.pop("sslmode", "") or "").lower()
 
-    # Fly internal DB hosts typically end with .internal or .flycast → no TLS
     is_internal = host.endswith(".internal") or host.endswith(".flycast")
 
     if for_async:
-        # Allow explicit override via env: ASYNC_PG_SSL=true/false
+        # Optional override via env: ASYNC_PG_SSL=true/false
         force_ssl_env = os.getenv("ASYNC_PG_SSL", "").lower()
 
-        # asyncpg uses ?ssl=true to force TLS; otherwise it’s plain.
-        if force_ssl_env in ("true", "1", "on"):
-            q["ssl"] = "true"
-        elif force_ssl_env in ("false", "0", "off"):
-            q.pop("ssl", None)
+        if is_internal:
+            # Fly private network does NOT use TLS → force it off
+            q["ssl"] = "false"
         else:
-            if not is_internal:
-                # If external host, default to SSL unless explicitly disabled
-                if mode in ("require", "verify-ca", "verify-full") or "ssl" not in q:
-                    q["ssl"] = "true"
+            if force_ssl_env in ("true", "1", "on"):
+                q["ssl"] = "true"
+            elif force_ssl_env in ("false", "0", "off"):
+                q["ssl"] = "false"
+            elif mode in ("require", "verify-ca", "verify-full"):
+                q["ssl"] = "true"
             else:
-                # Internal/private Fly networks do not use TLS
+                # leave unspecified for public hosts unless required
                 q.pop("ssl", None)
 
     new_query = urlencode(q, doseq=True)

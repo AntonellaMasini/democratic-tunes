@@ -11,6 +11,7 @@
 # Env & secrets
 **/.env
 **/*.env
+.env
 
 # OS/Editor
 **/.DS_Store
