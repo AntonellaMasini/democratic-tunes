@@ -1,12 +1,21 @@
-from fastapi import FastAPI
 from dotenv import load_dotenv
-from app.api import auth, rooms, tracks, votes, playback
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api import auth, playback, rooms, tracks, votes
 # Load environment variables from .env
 load_dotenv()
 
 
-app = FastAPI()
+app = FastAPI(title="Live Party Mode")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],        # dev: wide open; prod: set your frontend origin(s)
+    allow_credentials=True,     # needed for cookies
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():

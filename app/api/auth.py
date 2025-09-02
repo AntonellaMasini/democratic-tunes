@@ -40,6 +40,28 @@ async def create_guest(payload: GuestReq, response: Response, session: AsyncSess
             secure=False,               # set True behind HTTPS in prod
         )
 
+        
+        is_prod = os.getenv("ENV") == "prod"
+        cross_site = os.getenv("CROSS_SITE_COOKIES", "false").lower() == "true"
+        # If frontend is on a different ORIGIN (domain/port), set CROSS_SITE_COOKIES=true in prod.
+
+        response.set_cookie(
+            key="uid",
+            value=str(u.id),
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            httponly=True, 
+            # SameSite rules:
+            # - same-site (API + UI same origin): "lax"
+            # - cross-site (UI on another domain): must be "none" (+ Secure=True)
+            samesite="none" if cross_site else "lax",
+            secure=True if (is_prod and cross_site) else False,  # must be True when samesite="none" in prod
+        )
+
+
+
+
+
+
         return AuthResp(user_id=str(u.id), display_name=u.display_name) 
 
     except IntegrityError as e:

@@ -27,7 +27,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
 
 def get_url() -> str:
-    # Prefer env var; fallback to alembic.ini if you really want
+    
     url = os.getenv("DATABASE_URL")
     if not url:
         # Optional: fall back to alembic.ini's sqlalchemy.url

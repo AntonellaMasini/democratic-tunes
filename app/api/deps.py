@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 async def get_current_user_id(
-    x_user_id: Optional[str] = Header(default=None),  # dev/curl fallback
+    x_user_id: Optional[str] = Header(default=None),  # for dev
     uid: Optional[str] = Cookie(default=None),        # cookie set by /auth/guest
     ) -> UUID:
 
