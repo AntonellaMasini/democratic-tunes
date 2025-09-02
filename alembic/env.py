@@ -1,49 +1,41 @@
+# alembic/env.py
 from logging.config import fileConfig
 import os, sys
-
 from alembic import context
 
 sys.path.append(os.path.abspath("."))
 
-# load .env locally if present
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except Exception:
     pass
 
-# import the normalizer
-from app.infra.db_url import load_db_url
+from app.infra.db_url import load_db_url  # <- keep using your normalizer
 
-# Alembic Config
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# ---- Import Base so Alembic can autogenerate ----
-from app.infra.db import Base  # 
-import app.domain.models 
+from app.infra.db import Base
+import app.domain.models
 target_metadata = Base.metadata
 
-# ---- Use async engine ---
-from sqlalchemy.ext.asyncio import async_engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import pool, engine_from_config
 
 def get_url() -> str:
-    # use Alembic config as fallback
-    return load_db_url(for_async=True, fallback_config=config)
-
+    # IMPORTANT: sync URL for Alembic (psycopg)
+    return load_db_url(for_async=False, fallback_config=config)
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode."""
     url = get_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        compare_type=True,  # detect column type changes
-        compare_server_default=True
+        compare_type=True,
+        compare_server_default=True,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -59,21 +51,15 @@ def do_run_migrations(connection):
         context.run_migrations()
 
 def run_migrations_online() -> None:
-    cfg = dict(config.get_section(config.config_ini_section) or {})
-    cfg["sqlalchemy.url"] = get_url()  # inject normalized async URL
+    cfg = config.get_section(config.config_ini_section) or {}
+    cfg["sqlalchemy.url"] = get_url()   # inject normalized sync URL
 
-    connectable = async_engine_from_config(
-        cfg,
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+    connectable = engine_from_config(
+        cfg, prefix="sqlalchemy.", poolclass=pool.NullPool
     )
 
-    import asyncio
-    async def run_async_migrations():
-        async with connectable.connect() as connection:
-            await connection.run_sync(do_run_migrations)
-
-    asyncio.run(run_async_migrations())
+    with connectable.connect() as connection:
+        do_run_migrations(connection)
 
 if context.is_offline_mode():
     run_migrations_offline()
