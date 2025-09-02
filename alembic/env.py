@@ -25,16 +25,12 @@ target_metadata = Base.metadata
 # ---- Use async engine ---
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
+from app.infra.db_url import load_db_url
 
 def get_url() -> str:
-    
-    url = os.getenv("DATABASE_URL")
-    if not url:
-        # Optional: fall back to alembic.ini's sqlalchemy.url
-        url = config.get_main_option("sqlalchemy.url")
-    if not url:
-        raise RuntimeError("DATABASE_URL is not set and sqlalchemy.url is empty.")
-    return url
+    # use Alembic config as fallback
+    return load_db_url(for_async=True, fallback_config=config)
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
@@ -55,18 +51,17 @@ def do_run_migrations(connection):
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
+        compare_server_default=True,
     )
     with context.begin_transaction():
         context.run_migrations()
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' (async) mode."""
-    # Inject URL dynamically instead of relying on alembic.ini
-    config_section = config.get_section(config.config_ini_section) or {}
-    config_section["sqlalchemy.url"] = get_url()
+    cfg = dict(config.get_section(config.config_ini_section) or {})
+    cfg["sqlalchemy.url"] = get_url()  # inject normalized async URL
 
     connectable = async_engine_from_config(
-        config_section,
+        cfg,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -75,6 +70,7 @@ def run_migrations_online() -> None:
     async def run_async_migrations():
         async with connectable.connect() as connection:
             await connection.run_sync(do_run_migrations)
+
     asyncio.run(run_async_migrations())
 
 if context.is_offline_mode():

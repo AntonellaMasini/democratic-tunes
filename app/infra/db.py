@@ -1,7 +1,9 @@
 import os
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
+from app.infra.db_url import load_db_url
+
 load_dotenv() 
 
 """
@@ -12,15 +14,15 @@ Base = declarative_base() → a parent class that all models (tables) inherit fr
 get_session() → a FastAPI dependency to automatically give a session inside request handlers.
 """
 
+# Build the normalized async URL (works locally and on Fly)
+DATABASE_URL = load_db_url(for_async=True)
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL not set. Example: "
-                       "sqlite+aiosqlite:///./dev.db or "
-                       "postgresql+asyncpg://user:pass@host:5432/dbname")
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=os.getenv("SQL_ECHO", "false").lower() == "true", # if SQL_ECHO is set to "true", the engine will log all SQL statements it runs (for debug)
+    pool_pre_ping=True, # enables a connection health check (ping), runs a lightweight test query (aka SELECT 1) right before giving the connection to the app
+)
 
-
-engine = create_async_engine(DATABASE_URL, future=True, echo=True)  # echo=True prints SQL
 AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 Base = declarative_base()
 
