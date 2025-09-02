@@ -21,6 +21,7 @@ engine = create_async_engine(
     DATABASE_URL,
     echo=os.getenv("SQL_ECHO", "false").lower() == "true", # if SQL_ECHO is set to "true", the engine will log all SQL statements it runs (for debug)
     pool_pre_ping=True, # enables a connection health check (ping), runs a lightweight test query (aka SELECT 1) right before giving the connection to the app
+    connect_args={"ssl": False},   # tell asyncpg: no TLS
 )
 
 AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

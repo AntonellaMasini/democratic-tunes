@@ -8,37 +8,60 @@ except Exception:
     pass
 
 def load_db_url(*, for_async: bool = True, fallback_config=None) -> str:
-    """
-    Read DATABASE_URL from env (or an Alembic fallback), normalize scheme/driver.
-
-    - Accepts postgres:// and converts to postgresql://
-    - Adds +asyncpg for async engines when needed
-    """
     url = os.getenv("DATABASE_URL")
     if not url and fallback_config is not None:
-        # e.g., Alembic's Config: config.get_main_option("sqlalchemy.url")
         url = fallback_config.get_main_option("sqlalchemy.url")
-
     if not url:
         raise RuntimeError("DATABASE_URL is not set and sqlalchemy.url is empty.")
 
-    # 1) Normalize legacy scheme
+    # normalize scheme
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
 
-    # convert sslmode (psycopg) to ssl (asyncpg) or drop it
-    url = _normalize_ssl_query(url, for_async=for_async)
+    # DROP ALL QUERY PARAMS to avoid sslmode/ssl surprises
+    parts = urlsplit(url)
+    url = urlunsplit((parts.scheme, parts.netloc, parts.path, "", parts.fragment))
 
-
-    # 2) Add/remove async driver
-    if for_async:
-        if url.startswith("postgresql://") and "+asyncpg" not in url:
-            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    else:
-        if url.startswith("postgresql+asyncpg://"):
-            url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
+    # ensure async driver when requested
+    if for_async and url.startswith("postgresql://") and "+asyncpg" not in url:
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if not for_async and url.startswith("postgresql+asyncpg://"):
+        url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
 
     return url
+
+# def load_db_url(*, for_async: bool = True, fallback_config=None) -> str:
+#     """
+#     Read DATABASE_URL from env (or an Alembic fallback), normalize scheme/driver.
+
+#     - Accepts postgres:// and converts to postgresql://
+#     - Adds +asyncpg for async engines when needed
+#     """
+#     url = os.getenv("DATABASE_URL")
+#     if not url and fallback_config is not None:
+#         # e.g., Alembic's Config: config.get_main_option("sqlalchemy.url")
+#         url = fallback_config.get_main_option("sqlalchemy.url")
+
+#     if not url:
+#         raise RuntimeError("DATABASE_URL is not set and sqlalchemy.url is empty.")
+
+#     # 1) Normalize legacy scheme
+#     if url.startswith("postgres://"):
+#         url = url.replace("postgres://", "postgresql://", 1)
+
+#     # convert sslmode (psycopg) to ssl (asyncpg) or drop it
+#     url = _normalize_ssl_query(url, for_async=for_async)
+
+
+#     # 2) Add/remove async driver
+#     if for_async:
+#         if url.startswith("postgresql://") and "+asyncpg" not in url:
+#             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+#     else:
+#         if url.startswith("postgresql+asyncpg://"):
+#             url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
+
+#     return url
 
 def _normalize_ssl_query(url: str, *, for_async: bool) -> str:
     parts = urlsplit(url)
