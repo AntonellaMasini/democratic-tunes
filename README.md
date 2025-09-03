@@ -1,6 +1,6 @@
-# Live Party Mode — real-time collaborative playlist voting
+# Democrative Tunes! — real-time collaborative playlist voting
 
-A tiny backend that lets a group of friends **add songs and vote what plays next** , like a digital jukebox for your parties!
+A tiny backend that lets a group of friends **add songs and vote what plays next** , like a digital democratic jukebox for your parties!
 
 Powered by FastAPI and PostgreSQL, this backend is all about real-time magic—and I’m so excited to add Redis for even snappier caching and connect with Spotify soon! 
 

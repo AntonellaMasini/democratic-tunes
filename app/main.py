@@ -11,7 +11,7 @@ app = FastAPI(title="Live Party Mode")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # dev: wide open; prod: set your frontend origin(s)
+    allow_origins=["*"],        # dev: wide open; prod: set frontend origin(s)
     allow_credentials=True,     # needed for cookies
     allow_methods=["*"],
     allow_headers=["*"],
