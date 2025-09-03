@@ -38,4 +38,4 @@ export const vote = (code: string, room_track_id: string, value: 1 | -1) =>
   api.post(`votes/rooms/${code}/votes`, { json: { room_track_id, value } }).json<any>();
 
 export const advance = (code: string) =>
-  api.post(`playback/rooms/${code}/advance`).json<{ now_playing: any | null, queue: any[] }>();
+  api.post(`rooms/${code}/advance`).json<{ now_playing: any | null, queue: any[] }>();
