@@ -4,6 +4,14 @@ const api = ky.create({
   prefixUrl: import.meta.env.VITE_API_BASE,
   credentials: "include", // keep the uid cookie
   headers: { "content-type": "application/json" },
+  hooks: {
+    beforeRequest: [
+    r => {
+        const uid = localStorage.getItem("uid");
+        if (uid) r.headers.set("X-User-ID", uid);
+    }
+    ]
+}
 });
 
 export const health = () => api.get("health").json();
