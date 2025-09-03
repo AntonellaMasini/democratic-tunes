@@ -29,7 +29,7 @@ export const getQueue = (code: string) =>
   api.get(`tracks/rooms/${code}/queue`).json<any>();
 
 export const searchTracks = (q: string) =>
-  api.get("tracks/search", { searchParams: { q } }).json<any>();
+  api.get("tracks/search", { searchParams: { artist_or_title: q } }).json<any>();
 
 export const addTrack = (code: string, track_id: string) =>
   api.post(`tracks/rooms/${code}/tracks`, { json: { track_id } }).json<any>();
