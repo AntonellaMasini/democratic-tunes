@@ -30,3 +30,11 @@
 # Docker
 **/*.log
 fly.toml
+
+.git
+**/__pycache__/
+**/*.pyc
+.env
+node_modules/
+democratic-tunes-web/
+**/*.map

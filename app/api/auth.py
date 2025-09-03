@@ -3,7 +3,7 @@ import os
 import secrets
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,7 +21,7 @@ def make_guest_name(requested: Optional[str]) -> str:
     return base
     
 @router.post("/guest", response_model=AuthResp, status_code=status.HTTP_201_CREATED)
-async def create_guest(payload: GuestReq, response: Response, session: AsyncSession = Depends(get_session)):
+async def create_guest(payload: GuestReq, request: Request, response: Response, session: AsyncSession = Depends(get_session)):
     name = make_guest_name(payload.display_name)
     
     if len(name) > 64:
@@ -33,40 +33,31 @@ async def create_guest(payload: GuestReq, response: Response, session: AsyncSess
         await session.commit()
         await session.refresh(u)
 
-        # Set HttpOnly cookie so the browser remembers the user automatically
+
+        is_prod = os.getenv("ENV") == "prod"
+        # Set this to true in prod when your frontend is on a different origin (e.g. Vercel)
+        cross_site = os.getenv("CROSS_SITE_COOKIES", "false").lower() == "true"
+
+        # In prod on Fly --> HTTPS, so secure can be True.
+        # Locally (http://localhost) set CROSS_SITE_COOKIES=false so samesite=lax + secure=False works.
+        samesite = "none" if cross_site else "lax"
+        secure   = True if (is_prod and cross_site) else (request.url.scheme == "https")
+
         response.set_cookie(
             key="uid",
             value=str(u.id),
             max_age=60 * 60 * 24 * 30,  # 30 days
             httponly=True,
-            samesite="lax",
-            secure=False,               # set True behind HTTPS in prod
-        )
-
-        
-        is_prod = os.getenv("ENV") == "prod"
-        cross_site = os.getenv("CROSS_SITE_COOKIES", "false").lower() == "true"
-        # If frontend is on a different ORIGIN (domain/port), set CROSS_SITE_COOKIES=true in prod.
-
-        response.set_cookie(
-            key="uid",
-            value=str(u.id),
-            max_age=60 * 60 * 24 * 30,  # 30 days
-            httponly=True, 
             # SameSite rules:
             # - same-site (API + UI same origin): "lax"
             # - cross-site (UI on another domain): must be "none" (+ Secure=True)
-            samesite="none" if cross_site else "lax",
-            secure=True if (is_prod and cross_site) else False,  # must be True when samesite="none" in prod
+            samesite=samesite,
+            secure=secure,
+            path="/",                   # include so delete_cookie matches
         )
 
-
-
-
-
-
-        return AuthResp(user_id=str(u.id), display_name=u.display_name) 
-
+        return AuthResp(user_id=str(u.id), display_name=u.display_name)      
+      
     except IntegrityError as e:
         await session.rollback()
         logging.exception("Integrity error on /auth/guest")
@@ -78,11 +69,16 @@ async def create_guest(payload: GuestReq, response: Response, session: AsyncSess
 
     
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(response: Response):
+async def logout(response: Response, request: Request):
+    is_prod    = os.getenv("ENV") == "prod"
+    cross_site = os.getenv("CROSS_SITE_COOKIES", "false").lower() == "true"
+    samesite   = "none" if cross_site else "lax"
+    secure     = True if (is_prod and cross_site) else (request.url.scheme == "https")
+
     response.delete_cookie(
         key="uid",
         path="/",
         httponly=True,
-        samesite="lax",
-        secure=False  # True in prod (HTTPS)
+        samesite=samesite,
+        secure=secure,
     )

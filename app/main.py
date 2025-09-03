@@ -1,3 +1,5 @@
+import os
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,7 +13,7 @@ app = FastAPI(title="Live Party Mode")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # dev: wide open; prod: set frontend origin(s)
+    allow_origins=[os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")], # set explicit domains in prod
     allow_credentials=True,     # needed for cookies
     allow_methods=["*"],
     allow_headers=["*"],
