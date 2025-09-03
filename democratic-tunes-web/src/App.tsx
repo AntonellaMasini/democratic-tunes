@@ -34,7 +34,7 @@
 
 // export default App
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import * as api from "./api";
 
 type QueueItem = {
