@@ -51,8 +51,8 @@ type QueueItem = {
 
 export default function App() {
   const [code, setCode] = useState<string>("");
-  const [displayName, setDisplayName] = useState("guest");
-  const [uid, setUid] = useState<string>(""); // optional: store from cookie if you expose it
+  const [displayName] = useState("guest");
+  //const [uid, setUid] = useState<string>(""); // optional: store from cookie if you expose it
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [nowPlaying, setNowPlaying] = useState<QueueItem | null>(null);
   const [progressMs, setProgressMs] = useState(0);
