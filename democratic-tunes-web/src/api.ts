@@ -39,3 +39,7 @@ export const vote = (code: string, room_track_id: string, value: 1 | -1) =>
 
 export const advance = (code: string) =>
   api.post(`rooms/${code}/advance`).json<{ now_playing: any | null, queue: any[] }>();
+
+export const getNowPlaying = (code: string) =>
+    api.get(`rooms/${code}/now-playing`).json<{ now_playing: any | null }>();
+  

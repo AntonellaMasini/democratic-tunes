@@ -9,6 +9,7 @@ import {
   addTrack,
   vote,
   advance,
+  getNowPlaying,
 } from "./api";
 
 // Very loose types to avoid TS friction while you iterate
@@ -65,6 +66,8 @@ export default function App() {
   const [searching, setSearching] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const [nowPlaying, setNowPlaying] = useState<any | null>(null);
+
   // Health-check once so the first interaction feels snappy
   useEffect(() => {
     health().catch(() => {});
@@ -73,37 +76,37 @@ export default function App() {
   // Poll queue when in room
   useEffect(() => {
     let t: number | undefined;
+  
     async function poll() {
       if (!roomCode) return;
       setLoadingQueue(true);
       try {
-        const data = await getQueue(roomCode);
-        setQueue(data);
+        const [np, q] = await Promise.all([
+          getNowPlaying(roomCode),   // <- new
+          getQueue(roomCode),
+        ]);
+        setNowPlaying(np?.now_playing ?? null);
+        setQueue(q);
         setQueueError(null);
       } catch (e: any) {
-        setQueueError(e?.message || "Failed to load queue");
+        setQueueError(e?.message || "Failed to load queue/now playing");
       } finally {
         setLoadingQueue(false);
       }
     }
+  
     if (view === "room" && roomCode) {
       poll();
       t = window.setInterval(poll, 4000);
     }
-    return () => {
-      if (t) clearInterval(t);
-    };
+    return () => { if (t) clearInterval(t); };
   }, [view, roomCode]);
-
-  const nowPlaying = useMemo(
-    () => queue.find((x) => x.status === "playing") || null,
-    [queue]
-  );
+  
   const queueOnly = useMemo(
     () => queue.filter((x) => x.status !== "playing"),
     [queue]
   );
-
+  
   // --- actions ---
   async function onCreateGuest(e: FormEvent) {
     e.preventDefault();
@@ -204,10 +207,9 @@ export default function App() {
   async function onAdvance() {
     if (!roomCode) return;
     try {
-      // returns { now_playing, queue } in your API; we’ll just refetch:
-      await advance(roomCode);
-      const data = await getQueue(roomCode);
-      setQueue(data);
+      const { now_playing, queue } = await advance(roomCode);
+      setNowPlaying(now_playing ?? null);
+      setQueue(queue);
     } catch (e: any) {
       setErr(e?.message || "Advance failed");
     }
