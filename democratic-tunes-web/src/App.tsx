@@ -405,17 +405,12 @@ export default function App() {
     </header>
 
     <div style={bannerWrap}>
-      <img
-        src={`${import.meta.env.BASE_URL}illustration1.png`}
-        alt="Party vibes"
-        style={bannerImg}
-        loading="lazy"
-      />
+      <img src="/illustration1.png" alt="Party vibes" style={bannerImg} loading="lazy" />
     </div>
 
       <main style={grid}>
         <section style={panelCol}>
-          <h3>Now Playing</h3>
+          <h3>Now Playing:</h3>
           {nowPlaying ? (
             <div style={npCard}>
               <div style={{ fontWeight: 600 }}>{nowPlaying.title}</div>
