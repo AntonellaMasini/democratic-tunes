@@ -291,16 +291,26 @@ export default function App() {
     }
   }
 
+
   async function onAdvance() {
     if (!roomCode) return;
     try {
       const { now_playing, queue } = await advance(roomCode);
       setNowPlaying(now_playing ?? null);
       setQueue(queue);
+      setErr(null);
     } catch (e: any) {
-      setErr(e?.message || "Advance failed");
+      // ky throws HTTPError with a .response
+      if (e?.response?.status === 403) {
+        setErr(
+          "Easy, DJ! Only the host can skip songs. It’s a democracy… unless the host says nope! Dance it out instead! 😉🕺"
+        );
+      } else {
+        setErr(e?.message || "Advance failed");
+      }
     }
   }
+  
 
   // --- views ---
   if (view === "auth") {
@@ -439,7 +449,7 @@ export default function App() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="search songs…"
+              placeholder=" search songs…"
             />
             <button type="submit" disabled={searching}>
               {searching ? "Searching…" : "Search"}
