@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
   health,
@@ -46,14 +46,56 @@ export default function App() {
   const [displayName, setDisplayName] = useState<string>("");
   const [userId, setUserId] = useState<string | null>(localStorage.getItem("uid"));
 
-  // nav state
+  // // nav state
+  // type View = "auth" | "choose" | "created" | "join" | "room";
+  // const [view, setView] = useState<View>(userId ? "choose" : "auth");
   type View = "auth" | "choose" | "created" | "join" | "room";
-  const [view, setView] = useState<View>(userId ? "choose" : "auth");
+
+  const [view, setView] = useState<View>(() => {
+    const uid = localStorage.getItem("uid");
+    const rc = localStorage.getItem("room_code");
+    if (uid && rc) return "room";
+    if (uid) return "choose";
+    return "auth";
+  });
+
 
   // room state
   const [roomName, setRoomName] = useState("");
-  const [roomCode, setRoomCode] = useState("");
+  const [roomCodeState, _setRoomCodeState] = useState<string>(
+    () => localStorage.getItem("room_code") || ""
+  );
+
+  const [joinCode, setJoinCode] = useState("");
+  
+  const setRoomCode = (code: string) => {
+    _setRoomCodeState(code);
+    if (code) localStorage.setItem("room_code", code);
+    else localStorage.removeItem("room_code");
+  };
+  
+  const roomCode = roomCodeState;
   const [createdRoomCode, setCreatedRoomCode] = useState<string | null>(null);
+
+  function leaveRoom() {
+    // invalidate in-flight polls so their results are ignored
+    pollSeq.current++;
+
+    // clear persisted and in-memory room info
+    setRoomCode("");            // also clears localStorage via your setter
+    setCreatedRoomCode(null);
+
+    // clear UI state
+    setQueue([]);
+    setNowPlaying(null);
+    setResults([]);
+    setQ("");
+    setQueueError(null);
+    setErr(null);
+
+    // back to chooser
+    setView("choose");
+  }
 
   // queue state
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -67,6 +109,7 @@ export default function App() {
   const [err, setErr] = useState<string | null>(null);
 
   const [nowPlaying, setNowPlaying] = useState<any | null>(null);
+  const pollSeq = useRef(0);
 
   // Health-check once so the first interaction feels snappy
   useEffect(() => {
@@ -81,10 +124,12 @@ export default function App() {
       if (!roomCode) return;
       setLoadingQueue(true);
       try {
+        const seq = ++pollSeq.current;
         const [np, q] = await Promise.all([
           getNowPlaying(roomCode),   // <- new
           getQueue(roomCode),
         ]);
+        if (pollSeq.current !== seq) return; // ignore stale results
         setNowPlaying(np?.now_playing ?? null);
         setQueue(q);
         setQueueError(null);
@@ -152,17 +197,17 @@ export default function App() {
   async function onJoinRoom(e: FormEvent) {
     e.preventDefault();
     setErr(null);
-    const code = roomCode.trim().toUpperCase();
+    const code = joinCode.trim().toUpperCase();
     if (!code) {
       setErr("Enter a room code");
       return;
     }
     try {
-      // Use getQueue as validation
+      // validate against API first
       await getQueue(code);
-      setRoomCode(code);
+      setRoomCode(code);    // persists to localStorage
       setView("room");
-    } catch (e: any) {
+    } catch {
       setErr("Invalid room code");
     }
   }
@@ -256,8 +301,8 @@ export default function App() {
             <form onSubmit={onJoinRoom} style={{ display: "grid", gap: 8 }}>
               <label>Join with code</label>
               <input
-                value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value)}
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value)}
                 placeholder="8TVDCKVX"
               />
               <button type="submit">Join Room</button>
@@ -290,16 +335,19 @@ export default function App() {
   // room view
   return (
     <div style={shellWide}>
-      <header style={header}>
-        <div>
-          <b>Room:</b> <code>{roomCode}</code>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={onAdvance} title="End current track & advance">
-            ⏭ Advance
-          </button>
-        </div>
-      </header>
+    <header style={header}>
+      <div>
+        <b>Room:</b> <code>{roomCode}</code>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={onAdvance} title="End current track & advance">
+          ⏭ Advance
+        </button>
+        <button onClick={leaveRoom} title="Return to room chooser">
+          Leave room
+        </button>
+      </div>
+    </header>
 
       <main style={grid}>
         <section style={panel}>

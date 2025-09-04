@@ -40,6 +40,16 @@ export const vote = (code: string, room_track_id: string, value: 1 | -1) =>
 export const advance = (code: string) =>
   api.post(`rooms/${code}/advance`).json<{ now_playing: any | null, queue: any[] }>();
 
-export const getNowPlaying = (code: string) =>
-    api.get(`rooms/${code}/now-playing`).json<{ now_playing: any | null }>();
-  
+export const getNowPlaying = async (code: string) => {
+    try {
+      return await api
+        .get(`playback/rooms/${code}/now-playing`)
+        .json<{ now_playing: any | null }>();
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 404 || status === 204) {
+        return { now_playing: null };
+      }
+      throw err;
+    }
+  };
