@@ -111,6 +111,9 @@ export default function App() {
   const [nowPlaying, setNowPlaying] = useState<any | null>(null);
   const pollSeq = useRef(0);
 
+  const nowPlayingRef = useRef<any | null>(null);
+  useEffect(() => { nowPlayingRef.current = nowPlaying; }, [nowPlaying]);
+
   // Health-check once so the first interaction feels snappy
   useEffect(() => {
     health().catch(() => {});
@@ -120,25 +123,43 @@ export default function App() {
   useEffect(() => {
     let t: number | undefined;
   
-    async function poll() {
-      if (!roomCode) return;
-      setLoadingQueue(true);
-      try {
-        const seq = ++pollSeq.current;
-        const [np, q] = await Promise.all([
-          getNowPlaying(roomCode),   // <- new
-          getQueue(roomCode),
-        ]);
-        if (pollSeq.current !== seq) return; // ignore stale results
-        setNowPlaying(np?.now_playing ?? null);
-        setQueue(q);
-        setQueueError(null);
-      } catch (e: any) {
-        setQueueError(e?.message || "Failed to load queue/now playing");
-      } finally {
-        setLoadingQueue(false);
+  async function poll() {
+    if (!roomCode) return;
+    setLoadingQueue(true);
+    try {
+      const seq = ++pollSeq.current;
+      const [npResp, q] = await Promise.all([
+        getNowPlaying(roomCode),
+        getQueue(roomCode),
+      ]);
+      if (pollSeq.current !== seq) return; // ignore stale responses
+  
+      // Prefer explicit now_playing from API
+      let candidate = npResp?.now_playing ?? null;
+  
+      // If API says null, try to infer from queue
+      if (!candidate) {
+        const fromQueue = q.find((x: any) => x.status === "playing");
+        if (fromQueue) candidate = fromQueue;
       }
+  
+      // Last resort: keep previous to avoid flashing empty
+      if (!candidate) candidate = nowPlayingRef.current;
+  
+      setNowPlaying(candidate ?? null);
+      setQueue(q);
+      setQueueError(null);
+    } catch (e: any) {
+      setQueueError(e?.message || "Failed to load queue/now playing");
+    } finally {
+      setLoadingQueue(false);
     }
+  }
+  
+
+
+
+
   
     if (view === "room" && roomCode) {
       poll();
