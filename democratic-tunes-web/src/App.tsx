@@ -116,6 +116,9 @@ export default function App() {
   const queueRef = useRef<QueueItem[]>([]);
   useEffect(() => { queueRef.current = queue; }, [queue]);
 
+  const imgWrap: React.CSSProperties = { marginTop: 12, borderRadius: 12, overflow: "hidden" };
+  const fullWidthImg: React.CSSProperties = { width: "100%", height: 200, objectFit: "cover", display: "block" };
+  
   function sameNowPlaying(a: any | null, b: any | null) {
     if (!a && !b) return true;
     if (!a || !b) return false;
@@ -401,6 +404,10 @@ export default function App() {
       </div>
     </header>
 
+      <div style={bannerWrap}>
+        <img src="/illustration1.png" alt="Party vibes" style={bannerImg} loading="lazy" />
+      </div>
+
       <main style={grid}>
         <section style={panelCol}>
           <h3>Now Playing</h3>
@@ -479,6 +486,8 @@ export default function App() {
   );
 }
 
+
+
 // --- lil’ styles (kept inline for simplicity) ---
 const shell: React.CSSProperties = {
   minHeight: "100vh",
@@ -523,14 +532,6 @@ const header: React.CSSProperties = {
   width: "min(1200px, 100%)",
   margin: "24px auto 12px",
 };
-
-// const grid: React.CSSProperties = {
-//   display: "grid",
-//   gridTemplateColumns: "1fr 1fr",
-//   gap: 16,
-//   width: "min(1100px, 100%)",
-//   margin: "0 auto 24px",
-// };
 
 // main content area: always centered, fixed max width, fills the rest of screen
 const grid: React.CSSProperties = {
@@ -592,3 +593,18 @@ const codeBox: React.CSSProperties = {
 const ErrorNote: React.FC<React.PropsWithChildren> = ({ children }) => (
   <div style={{ marginTop: 10, color: "#ffb3b3" }}>{children}</div>
 );
+
+const bannerWrap: React.CSSProperties = {
+  width: "min(1100px, 100%)",
+  margin: "0 auto 12px",
+  borderRadius: 16,
+  overflow: "hidden",
+  boxShadow: "0 6px 24px rgba(0,0,0,.25)"
+};
+
+const bannerImg: React.CSSProperties = {
+  width: "100%",
+  height: 220,      // tweak height as you like
+  display: "block",
+  objectFit: "cover"
+};
