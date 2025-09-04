@@ -99,7 +99,6 @@ export default function App() {
 
   // queue state
   const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [loadingQueue, setLoadingQueue] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
 
   // search state
@@ -147,7 +146,6 @@ export default function App() {
   
   async function poll() {
     if (!roomCode) return;
-    setLoadingQueue(true);
     try {
       const seq = ++pollSeq.current;
       const [npResp, q] = await Promise.all([
@@ -181,14 +179,8 @@ export default function App() {
     } catch (e: any) {
       setQueueError(e?.message || "Failed to load queue/now playing");
     } finally {
-      setLoadingQueue(false);
     }
   }
-  
-
-
-
-
   
     if (view === "room" && roomCode) {
       poll();
@@ -416,42 +408,26 @@ export default function App() {
           )}
 
           <h3 style={{ marginTop: 20 }}>Queue</h3>
-          <div style={{ position: "relative", minHeight: 120 }}>
-            {loadingQueue && (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "grid",
-                  placeItems: "center",
-                  pointerEvents: "none",
-                  opacity: 0.6,
-                }}
-              >
-                Loading…
-              </div>
-            )}
-
-            
-            <div style={{ display: "grid", gap: 8 }}>
-              {queueOnly.length === 0 && (
-                <div style={{ opacity: 0.7 }}>No tracks yet</div>
-              )}
-              {queueOnly.map((t) => (
-                <div key={t.room_track_id} style={row}>
-                  <div style={{ minWidth: 44, textAlign: "right" }}>{t.votes}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600 }}>{t.title}</div>
-                    <div style={{ opacity: 0.75 }}>
-                      {t.artist} · {msToMin(t.duration_ms)}
+            <div style={{ minHeight: 120 }}>
+              <div style={{ display: "grid", gap: 8 }}>
+                {queueOnly.length === 0 && (
+                  <div style={{ opacity: 0.7 }}>No tracks yet</div>
+                )}
+                {queueOnly.map((t) => (
+                  <div key={t.room_track_id} style={row}>
+                    <div style={{ minWidth: 44, textAlign: "right" }}>{t.votes}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600 }}>{t.title}</div>
+                      <div style={{ opacity: 0.75 }}>
+                        {t.artist} · {msToMin(t.duration_ms)}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => onVote(t.room_track_id, 1)}>👍</button>
+                      <button onClick={() => onVote(t.room_track_id, -1)}>👎</button>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => onVote(t.room_track_id, 1)}>👍</button>
-                    <button onClick={() => onVote(t.room_track_id, -1)}>👎</button>
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
 
