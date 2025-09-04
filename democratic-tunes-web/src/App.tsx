@@ -494,7 +494,7 @@ const shell: React.CSSProperties = {
   display: "grid",
   placeItems: "center",
   padding: 24,
-  background: "#0b0c10",
+  background: "#8e9aaf",
   color: "#e8e8ea",
   fontFamily:
     "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
@@ -508,7 +508,7 @@ const shellWide: React.CSSProperties = {
   flexDirection: "column",
   alignItems: "center",
   padding: 24,
-  background: "#0b0c10",
+  background: "#8e9aaf",
   color: "#e8e8ea",
   fontFamily:
     "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
@@ -594,7 +594,7 @@ const ErrorNote: React.FC<React.PropsWithChildren> = ({ children }) => (
 );
 
 const bannerImg: React.CSSProperties = {
-  width: "50%",
+  width: "40%",
   height: 320,      
   display: "block",
   objectFit: "cover"
