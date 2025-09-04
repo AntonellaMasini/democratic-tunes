@@ -535,7 +535,7 @@ const header: React.CSSProperties = {
 // main content area: always centered, fixed max width, fills the rest of screen
 const grid: React.CSSProperties = {
   width: "min(1200px, 100%)",
-  margin: "0 auto 24px",
+  margin: "10px auto 24px",
   display: "grid",
   gridTemplateColumns: "1fr 1fr",
   gap: 16,
