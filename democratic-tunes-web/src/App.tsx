@@ -318,7 +318,7 @@ export default function App() {
       <div style={shell}>
         <Card>
           <h1>democratic-tunes</h1>
-          <p>Pick a display name to get started</p>
+          <p>Pick a display name to get started!</p>
           <form onSubmit={onCreateGuest} style={{ display: "grid", gap: 12 }}>
             <input
               value={displayName}
