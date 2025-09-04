@@ -494,7 +494,7 @@ const shell: React.CSSProperties = {
   display: "grid",
   placeItems: "center",
   padding: 24,
-  background: "#8e9aaf",
+  background: "#91a1aa",
   color: "#e8e8ea",
   fontFamily:
     "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
@@ -508,7 +508,7 @@ const shellWide: React.CSSProperties = {
   flexDirection: "column",
   alignItems: "center",
   padding: 24,
-  background: "#8e9aaf",
+  background: "#91a1aa",
   color: "#e8e8ea",
   fontFamily:
     "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
