@@ -116,9 +116,6 @@ export default function App() {
   const queueRef = useRef<QueueItem[]>([]);
   useEffect(() => { queueRef.current = queue; }, [queue]);
 
-  const imgWrap: React.CSSProperties = { marginTop: 12, borderRadius: 12, overflow: "hidden" };
-  const fullWidthImg: React.CSSProperties = { width: "100%", height: 200, objectFit: "cover", display: "block" };
-  
   function sameNowPlaying(a: any | null, b: any | null) {
     if (!a && !b) return true;
     if (!a || !b) return false;
