@@ -114,6 +114,28 @@ export default function App() {
   const nowPlayingRef = useRef<any | null>(null);
   useEffect(() => { nowPlayingRef.current = nowPlaying; }, [nowPlaying]);
 
+  const queueRef = useRef<QueueItem[]>([]);
+  useEffect(() => { queueRef.current = queue; }, [queue]);
+
+  function sameNowPlaying(a: any | null, b: any | null) {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+    return a.room_track_id === b.room_track_id && a.votes === b.votes;
+  }
+
+  function sameQueue(a: QueueItem[], b: QueueItem[]) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (
+        a[i].room_track_id !== b[i].room_track_id ||
+        a[i].votes !== b[i].votes ||
+        a[i].status !== b[i].status
+      ) return false;
+    }
+    return true;
+  }
+
+
   // Health-check once so the first interaction feels snappy
   useEffect(() => {
     health().catch(() => {});
@@ -145,6 +167,13 @@ export default function App() {
   
       // Last resort: keep previous to avoid flashing empty
       if (!candidate) candidate = nowPlayingRef.current;
+
+      if (!sameNowPlaying(nowPlayingRef.current, candidate)) {
+        setNowPlaying(candidate ?? null);
+      }
+      if (!sameQueue(queueRef.current, q)) {
+        setQueue(q);
+      }
   
       setNowPlaying(candidate ?? null);
       setQueue(q);
@@ -373,6 +402,7 @@ export default function App() {
       <main style={grid}>
         <section style={panel}>
           <h3>Now Playing</h3>
+          <h3>Now Playing</h3>
           {nowPlaying ? (
             <div style={npCard}>
               <div style={{ fontWeight: 600 }}>{nowPlaying.title}</div>
@@ -386,25 +416,48 @@ export default function App() {
           )}
 
           <h3 style={{ marginTop: 20 }}>Queue</h3>
-          {loadingQueue && <div>Loading queue…</div>}
-          {queueError && <ErrorNote>{queueError}</ErrorNote>}
-          <div style={{ display: "grid", gap: 8 }}>
-            {queueOnly.length === 0 && <div style={{ opacity: 0.7 }}>No tracks yet</div>}
-            {queueOnly.map((t) => (
-              <div key={t.room_track_id} style={row}>
-                <div style={{ minWidth: 44, textAlign: "right" }}>{t.votes}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600 }}>{t.title}</div>
-                  <div style={{ opacity: 0.75 }}>
-                    {t.artist} · {msToMin(t.duration_ms)}
+          <div style={{ position: "relative", minHeight: 120 }}>
+            {loadingQueue && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "grid",
+                  placeItems: "center",
+                  pointerEvents: "none",
+                  opacity: 0.6,
+                }}
+              >
+                Loading…
+              </div>
+            )}
+
+            
+            <div style={{ display: "grid", gap: 8 }}>
+              {queueOnly.length === 0 && (
+                <div style={{ opacity: 0.7 }}>No tracks yet</div>
+              )}
+              {queueOnly.map((t) => (
+                <div key={t.room_track_id} style={row}>
+                  <div style={{ minWidth: 44, textAlign: "right" }}>{t.votes}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600 }}>{t.title}</div>
+                    <div style={{ opacity: 0.75 }}>
+                      {t.artist} · {msToMin(t.duration_ms)}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => onVote(t.room_track_id, 1)}>👍</button>
+                    <button onClick={() => onVote(t.room_track_id, -1)}>👎</button>
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={() => onVote(t.room_track_id, 1)}>👍</button>
-                  <button onClick={() => onVote(t.room_track_id, -1)}>👎</button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          {/* fixed-height error slot to avoid layout jumps */}
+          <div style={{ minHeight: 22, marginTop: 6 }}>
+            {queueError && <ErrorNote>{queueError}</ErrorNote>}
           </div>
         </section>
 
