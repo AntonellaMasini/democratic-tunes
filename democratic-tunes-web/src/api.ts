@@ -43,7 +43,7 @@ export const advance = (code: string) =>
 export const getNowPlaying = async (code: string) => {
     try {
       return await api
-        .get(`playback/rooms/${code}/now-playing`)
+        .get(`rooms/${code}/now-playing`)
         .json<{ now_playing: any | null }>();
     } catch (err: any) {
       const status = err?.response?.status;
