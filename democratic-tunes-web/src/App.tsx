@@ -594,8 +594,8 @@ const ErrorNote: React.FC<React.PropsWithChildren> = ({ children }) => (
 );
 
 const bannerImg: React.CSSProperties = {
-  width: "100%",
-  height: 220,      
+  width: "50%",
+  height: 320,      
   display: "block",
   objectFit: "cover"
 };
