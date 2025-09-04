@@ -472,16 +472,30 @@ export default function App() {
 
 // --- lil’ styles (kept inline for simplicity) ---
 const shell: React.CSSProperties = {
-  minHeight: "100svh",
+  minHeight: "100vh",
+  width: "100vw",
   display: "grid",
   placeItems: "center",
   padding: 24,
   background: "#0b0c10",
   color: "#e8e8ea",
-  fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
+  fontFamily:
+    "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
 };
 
-const shellWide: React.CSSProperties = { ...shell, alignItems: "start" };
+// full-viewport, centered column layout
+const shellWide: React.CSSProperties = {
+  minHeight: "100vh",
+  width: "100vw",
+  display: "flex",
+  flexDirection: "vertical" as any, // or "column" if your TS config complains
+  alignItems: "center",
+  padding: 24,
+  background: "#0b0c10",
+  color: "#e8e8ea",
+  fontFamily:
+    "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
+};
 
 const Card: React.FC<React.PropsWithChildren> = ({ children }) => (
   <div style={{ padding: 24, borderRadius: 16, background: "#111217", width: 420, maxWidth: "100%", display: "grid", gap: 12, boxShadow: "0 6px 24px rgba(0,0,0,.25)" }}>
@@ -497,16 +511,26 @@ const header: React.CSSProperties = {
   padding: 16,
   borderRadius: 16,
   background: "#111217",
-  width: "min(1100px, 100%)",
+  width: "min(1200px, 100%)",
   margin: "24px auto 12px",
 };
 
+// const grid: React.CSSProperties = {
+//   display: "grid",
+//   gridTemplateColumns: "1fr 1fr",
+//   gap: 16,
+//   width: "min(1100px, 100%)",
+//   margin: "0 auto 24px",
+// };
+
+// main content area: always centered, fixed max width, fills the rest of screen
 const grid: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 16,
-  width: "min(1100px, 100%)",
+  width: "min(1200px, 100%)",                    // <- fixed max width
   margin: "0 auto 24px",
+  display: "grid",
+  gridTemplateColumns: "minmax(360px, 1fr) minmax(360px, 1fr)",
+  gap: 16,
+  flex: "1 1 auto",                              // <- take remaining height
 };
 
 const panel: React.CSSProperties = {
@@ -515,6 +539,8 @@ const panel: React.CSSProperties = {
   background: "#111217",
   display: "grid",
   gap: 12,
+  minHeight: 0,
+  overflow: "auto",
 };
 
 const row: React.CSSProperties = {
