@@ -404,9 +404,14 @@ export default function App() {
       </div>
     </header>
 
-      <div style={bannerWrap}>
-        <img src="/illustration1.png" alt="Party vibes" style={bannerImg} loading="lazy" />
-      </div>
+    <div style={bannerWrap}>
+      <img
+        src={`${import.meta.env.BASE_URL}illustration1.png`}
+        alt="Party vibes"
+        style={bannerImg}
+        loading="lazy"
+      />
+    </div>
 
       <main style={grid}>
         <section style={panelCol}>
@@ -444,7 +449,6 @@ export default function App() {
               </div>
             ))}
           </div>
-
           {queueError && <ErrorNote>{queueError}</ErrorNote>}
         </section>
 
@@ -595,7 +599,7 @@ const ErrorNote: React.FC<React.PropsWithChildren> = ({ children }) => (
 );
 
 const bannerWrap: React.CSSProperties = {
-  width: "min(1100px, 100%)",
+  width: "min(1200px, 100%)",
   margin: "0 auto 12px",
   borderRadius: 16,
   overflow: "hidden",
