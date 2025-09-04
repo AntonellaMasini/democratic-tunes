@@ -401,9 +401,12 @@ export default function App() {
       </div>
     </header>
 
-    <div style={bannerWrap}>
-      <img src="/illustration1.png" alt="Party vibes" style={bannerImg} loading="lazy" />
-    </div>
+    <img
+      src={`${import.meta.env.BASE_URL}illustration1.png`}
+      alt="Party vibes"
+      style={bannerImg}
+      loading="lazy"
+    />
 
       <main style={grid}>
         <section style={panelCol}>
@@ -502,7 +505,7 @@ const shellWide: React.CSSProperties = {
   minHeight: "100vh",
   width: "100vw",
   display: "flex",
-  flexDirection: "vertical" as any, // or "column" if your TS config complains
+  flexDirection: "column",
   alignItems: "center",
   padding: 24,
   background: "#0b0c10",
