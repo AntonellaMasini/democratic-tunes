@@ -404,8 +404,8 @@ export default function App() {
       </div>
     </header>
 
-    <div style={bannerWrap}>
-      <img src="/illustration1.png" alt="Party vibes" style={bannerImg} loading="lazy" />
+    <div style={imgWrap}>
+      <img src="/illustration1.png" alt="Party vibes" style={fullWidthImg} loading="lazy" />
     </div>
 
       <main style={grid}>
