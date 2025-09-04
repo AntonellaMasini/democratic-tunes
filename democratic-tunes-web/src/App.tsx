@@ -392,8 +392,7 @@ export default function App() {
     </header>
 
       <main style={grid}>
-        <section style={panel}>
-          <h3>Now Playing</h3>
+        <section style={panelCol}>
           <h3>Now Playing</h3>
           {nowPlaying ? (
             <div style={npCard}>
@@ -407,38 +406,35 @@ export default function App() {
             <div style={{ opacity: 0.7 }}>Nothing playing yet</div>
           )}
 
-          <h3 style={{ marginTop: 20 }}>Queue</h3>
-            <div style={{ minHeight: 120 }}>
-              <div style={{ display: "grid", gap: 8 }}>
-                {queueOnly.length === 0 && (
-                  <div style={{ opacity: 0.7 }}>No tracks yet</div>
-                )}
-                {queueOnly.map((t) => (
-                  <div key={t.room_track_id} style={row}>
-                    <div style={{ minWidth: 44, textAlign: "right" }}>{t.votes}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600 }}>{t.title}</div>
-                      <div style={{ opacity: 0.75 }}>
-                        {t.artist} · {msToMin(t.duration_ms)}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button onClick={() => onVote(t.room_track_id, 1)}>👍</button>
-                      <button onClick={() => onVote(t.room_track_id, -1)}>👎</button>
-                    </div>
+          <h3 style={{ marginTop: 8 }}>Queue</h3>
+
+          {/* Only this part scrolls */}
+          <div style={scrollArea}>
+            {queueOnly.length === 0 && <div style={{ opacity: 0.7 }}>No tracks yet</div>}
+            {queueOnly.map((t) => (
+              <div key={t.room_track_id} style={row}>
+                <div style={{ minWidth: 44, textAlign: "right" }}>{t.votes}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600 }}>{t.title}</div>
+                  <div style={{ opacity: 0.75 }}>
+                    {t.artist} · {msToMin(t.duration_ms)}
                   </div>
-                ))}
-            </div>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => onVote(t.room_track_id, 1)}>👍</button>
+                  <button onClick={() => onVote(t.room_track_id, -1)}>👎</button>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* fixed-height error slot to avoid layout jumps */}
-          <div style={{ minHeight: 22, marginTop: 6 }}>
-            {queueError && <ErrorNote>{queueError}</ErrorNote>}
-          </div>
+          {queueError && <ErrorNote>{queueError}</ErrorNote>}
         </section>
 
-        <section style={panel}>
+
+        <section style={panelCol}>
           <h3>Add Tracks</h3>
+          {/* Form stays fixed height at top */}
           <form onSubmit={onSearch} style={{ display: "flex", gap: 8 }}>
             <input
               value={q}
@@ -450,7 +446,8 @@ export default function App() {
             </button>
           </form>
 
-          <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+          {/* Only results scroll; search bar doesnt move */}
+          <div style={scrollArea}>
             {results.map((r) => (
               <div key={r.id} style={row}>
                 <div style={{ flex: 1 }}>
@@ -463,8 +460,10 @@ export default function App() {
               </div>
             ))}
           </div>
+
           {err && <ErrorNote>{err}</ErrorNote>}
         </section>
+
       </main>
     </div>
   );
@@ -525,22 +524,36 @@ const header: React.CSSProperties = {
 
 // main content area: always centered, fixed max width, fills the rest of screen
 const grid: React.CSSProperties = {
-  width: "min(1200px, 100%)",                    // <- fixed max width
+  width: "min(1200px, 100%)",
   margin: "0 auto 24px",
   display: "grid",
-  gridTemplateColumns: "minmax(360px, 1fr) minmax(360px, 1fr)",
+  gridTemplateColumns: "1fr 1fr",
   gap: 16,
-  flex: "1 1 auto",                              // <- take remaining height
+  flex: "1 1 auto",  // fill remaining vertical space
+  minHeight: 0,      // allow children to compute 100% height correctly
 };
 
-const panel: React.CSSProperties = {
+
+// panel that is a fixed-height column; only inner list scrolls
+const panelCol: React.CSSProperties = {
   padding: 16,
   borderRadius: 16,
   background: "#111217",
-  display: "grid",
+  display: "flex",
+  flexDirection: "column",
   gap: 12,
+  height: "100%",  // fill the grid row
+  minHeight: 0,    // important so inner scroll areas can size
+};
+
+// reusable scroll area
+const scrollArea: React.CSSProperties = {
+  flex: 1,
   minHeight: 0,
-  overflow: "auto",
+  overflowY: "auto",
+  display: "grid",
+  gap: 8,
+  paddingRight: 4,  // little room for scrollbar
 };
 
 const row: React.CSSProperties = {
