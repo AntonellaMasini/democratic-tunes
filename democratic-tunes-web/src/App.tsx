@@ -515,7 +515,7 @@ const shellWide: React.CSSProperties = {
 };
 
 const Card: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <div style={{ padding: 24, borderRadius: 16, background: "#111217", width: 420, maxWidth: "100%", display: "grid", gap: 12, boxShadow: "0 6px 24px rgba(0,0,0,.25)" }}>
+  <div style={{ padding: 24, borderRadius: 16, background: "#424b54", width: 420, maxWidth: "100%", display: "grid", gap: 12, boxShadow: "0 6px 24px rgba(0,0,0,.25)" }}>
     {children}
   </div>
 );
@@ -527,7 +527,7 @@ const header: React.CSSProperties = {
   gap: 12,
   padding: 16,
   borderRadius: 16,
-  background: "#111217",
+  background: "#424b54",
   width: "min(1200px, 100%)",
   margin: "24px auto 12px",
 };
@@ -548,7 +548,7 @@ const grid: React.CSSProperties = {
 const panelCol: React.CSSProperties = {
   padding: 16,
   borderRadius: 16,
-  background: "#111217",
+  background: "#424b54",
   display: "flex",
   flexDirection: "column",
   gap: 12,
