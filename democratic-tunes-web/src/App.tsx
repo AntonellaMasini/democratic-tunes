@@ -574,7 +574,7 @@ const row: React.CSSProperties = {
 
 const npCard: React.CSSProperties = {
   ...row,
-  background: "##b06474",
+  background: "#b06474",
 };
 
 const codeBox: React.CSSProperties = {
