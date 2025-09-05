@@ -47,8 +47,6 @@ export default function App() {
   const [userId, setUserId] = useState<string | null>(localStorage.getItem("uid"));
 
   // // nav state
-  // type View = "auth" | "choose" | "created" | "join" | "room";
-  // const [view, setView] = useState<View>(userId ? "choose" : "auth");
   type View = "auth" | "choose" | "created" | "join" | "room";
 
   const [view, setView] = useState<View>(() => {
@@ -157,7 +155,7 @@ export default function App() {
       // Prefer explicit now_playing from API
       let candidate = npResp?.now_playing ?? null;
   
-      // If API says null, try to infer from queue
+      // if API says null, try to infer from queue
       if (!candidate) {
         const fromQueue = q.find((x: any) => x.status === "playing");
         if (fromQueue) candidate = fromQueue;
@@ -576,7 +574,7 @@ const row: React.CSSProperties = {
 
 const npCard: React.CSSProperties = {
   ...row,
-  background: "#18202a",
+  background: "##b06474",
 };
 
 const codeBox: React.CSSProperties = {
