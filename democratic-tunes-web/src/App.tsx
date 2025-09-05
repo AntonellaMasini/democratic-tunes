@@ -424,9 +424,8 @@ export default function App() {
           )}
 
           <h3 style={{ marginTop: 8 }}>Queue</h3>
-
           {/* Only this part scrolls */}
-          <div style={scrollArea}>
+          <div style={scrollAreaFixed}>
             {queueOnly.length === 0 && <div style={{ opacity: 0.7 }}>No tracks yet</div>}
             {queueOnly.map((t) => (
               <div key={t.room_track_id} style={row}>
@@ -463,7 +462,7 @@ export default function App() {
           </form>
 
           {/* Only results scroll; search bar doesnt move */}
-          <div style={scrollArea}>
+          <div style={scrollAreaFixed}>
             {results.map((r) => (
               <div key={r.id} style={row}>
                 <div style={{ flex: 1 }}>
@@ -557,14 +556,14 @@ const panelCol: React.CSSProperties = {
 };
 
 // reusable scroll area
-const scrollArea: React.CSSProperties = {
-  flex: 1,
-  minHeight: 0,
-  overflowY: "auto",
-  display: "grid",
-  gap: 8,
-  paddingRight: 4,  // little room for scrollbar
-};
+// const scrollArea: React.CSSProperties = {
+//   flex: 1,
+//   minHeight: 0,
+//   overflowY: "auto",
+//   display: "grid",
+//   gap: 8,
+//   paddingRight: 4,  // little room for scrollbar
+// };
 
 const row: React.CSSProperties = {
   display: "flex",
@@ -600,3 +599,13 @@ const bannerImg: React.CSSProperties = {
   objectFit: "cover"
 };
 
+// fixed height (tweak to taste or make it responsive with clamp())
+const LIST_HEIGHT_PX = 360;
+
+const scrollAreaFixed: React.CSSProperties = {
+  height: LIST_HEIGHT_PX,
+  overflowY: "auto",
+  display: "grid",
+  gap: 8,
+  paddingRight: 4,
+};
